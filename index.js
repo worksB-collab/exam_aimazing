@@ -154,3 +154,8 @@ app.get('/renewAutoIncrement', jsonParser, (req, res) => {
         }
     })
 })
+
+module.exports = (req, res) => {
+    const { name = 'World' } = req.query
+    res.send(`Hello ${name}!`)
+  }
