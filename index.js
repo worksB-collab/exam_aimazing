@@ -32,20 +32,25 @@ var jsonParser = bodyParser.json();
 
 //登入
 app.post("/login", (req, res) => {
-  let user = req.body.username;
-  let password = req.body.password;
-  conn.query(
-    `SELECT* FROM Users WHERE user_username = "${user}"LIMIT 1;`,
-    function (err, result, fields) {
-      if (err) throw err;
-      if (result.user_password == password) {
-        console.log(result);
-        res.json(result);
+    let user = req.body.username;
+    let password = req.body.password;
+    conn.query(
+      `SELECT* FROM Users WHERE user_username = "${user}"LIMIT 1;`,
+      function (err, result, fields) {
+        if (err) throw err;
+        if (result.user_password == password) {
+          console.log(result);
+          res.json(result);
+        }
+        res.json("wrong username or password");
       }
-      res.json("wrong username or password");
-    }
-  );
-});
+    );
+  });
+
+  //登出
+  app.post("/logout", (req, res) => {
+    let user = req.body.token;
+  });
 
 //get所有標籤
 app.get("/getAllTags", (req, res) => {
@@ -60,7 +65,7 @@ app.get("/getAllTags", (req, res) => {
 });
 
 //用reciept id找標籤
-app.post("/getTag", (req, res) => {
+app.post("/getTagById", (req, res) => {
   let rescipt_id = req.body.rescipt_id;
   conn.query(
     `SELECT * FROM Tags WHERE receipt_id = "${rescipt_id}"LIMIT 1;`,
@@ -101,7 +106,7 @@ app.post("/addTag", (req, res) => {
 
 //更新標籤
 app.patch("/updateTag", (req, res) => {
-  let rescipt_id = req.body.rescipt_id;
+  let receipt_id = req.body.rescipt_id;
   let tag_name = req.body.tag_name;
         conn.query(
           `UPDATE Tags SET settag_name = "${tag_name}" WHERE receipt_id = "${receipt_id}" LIMIT 1;`,
@@ -114,8 +119,7 @@ app.patch("/updateTag", (req, res) => {
 
 //刪除標籤
 app.delete("/deleteTag", (req, res) => {
-  let rescipt_id = req.body.rescipt_id;
-  let tag_name = req.body.tag_name;
+  let receipt_id = req.body.rescipt_id;
   conn.query(
     `UPDATE Tags SET tag_name = "" WHERE receipt_id = "${receipt_id}";`,
     function (err, result, fields) {
