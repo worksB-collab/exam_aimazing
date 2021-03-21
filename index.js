@@ -1,161 +1,272 @@
-const express = require('express'); //如同Java import套件
-const bodyParser = require('body-parser');
-const cors = require('cors');
+const decode = require("./decode.js");
+const express = require("express");
+const bodyParser = require("body-parser");
+const cors = require("cors");
 const app = express();
-app.use(bodyParser.urlencoded({
-    extended: true
-}));
-//而JavaScript中，所有的插件都是一個物件(沒有類別的概念，一導入就是實體，需要用變數接住)
-const mysql = require('mysql'); //Import mysql套件
-const {
-    json
-} = require('body-parser');
-const port = process.env.PORT || 3000; //const是區域變數，不可改(類似java final)
-//當專案產出、發佈到線上公開存取，這個數值會隨著不同的主機環境動態改變。所以這裡必須要設定一個動態的數值。
+app.use(
+  bodyParser.urlencoded({
+    extended: true,
+  })
+);
+const mysql = require("mysql");
+const { json } = require("body-parser");
+const port = process.env.PORT || 3000; 
 app.listen(port, () => {
-    //在防火牆port監聽request
-    console.log('Listening on port'); //在terminal中印出listening on port
+  console.log("Listening on port"); 
 });
 
-//建立mysql連線
 var conn = mysql.createConnection({
-    host: '34.68.241.191', //資料庫在伺服器上，所以是填伺服器IP
-    user: 'billy.wu', //輸入之前設定的使用者帳號
-    password: 'billy.wu',
-    database: 'ticketC',
+  host: "34.80.168.87",
+  user: "billy",
+  password: "billy",
+  database: "aimazing",
 });
 
-// 建立連線後不論是否成功都會呼叫
-conn.connect(function(err) {
-    if (err) throw err;
-    console.log('connect success!');
+conn.connect(function (err) {
+  if (err) throw err;
+  console.log("connect success!");
 });
 
-//其他的資料庫操作，位置預留
-
-//關閉連線時呼叫
-// conn.end(function(err) {
-//     if (err) throw err;
-//     console.log('connect end');
-// })
 app.use(cors());
-// app.use(bodyParser.json());//允許接收json格式
-// app.use(bodyParser.urlencoded({extended: true}));//允許接收x-www-form-urlencoded格式
+var jsonParser = bodyParser.json(); 
 
-var jsonParser = bodyParser.json(); //這個是區域的做法，只在特定api的路徑中指定接收型態
-//var urlencodedParser = bodyParser.urlencoded({ extended: false });
-//parse application/x-www-form-urlencoded，extended: false代表不允許接收巢狀資料
-
-app.post('/getQuota', (req, res) => {
-    let user = req.body.user
-    conn.query('SELECT quota FROM users WHERE name = "' + user + '" LIMIT 1;', function(err, result, fields) {
-        if (err) throw err;
+//登入
+app.post("/login", (req, res) => {
+  let user = req.body.username;
+  let password = req.body.password;
+  conn.query(
+    `SELECT* FROM Users WHERE user_username = "${user}"LIMIT 1;`,
+    function (err, result, fields) {
+      if (err) throw err;
+      if (result.user_password == password) {
         console.log(result);
         res.json(result);
-    })
+      }
+      res.json("wrong username or password");
+    }
+  );
 });
 
-app.post('/getTickets', (req, res) => {
-    let user = req.body.user
-    let gotQuota
-    conn.query('SELECT quota FROM users WHERE name = "' + user + '" LIMIT 1;', function(err, result, fields) {
-        if (err) throw err;
-        gotQuota = result[0].quota
+//get所有標籤
+app.get("/getAllTags", (req, res) => {
+  conn.query(`SELECT * FROM Tags;`, function (err, result, fields) {
+    if (err) throw err;
+    if (result.isEmpty()) {
+      res.json("there is no such recipt");
+    } else {
+      res.json(result);
+    }
+  });
+});
 
-        conn.query('SELECT * FROM tickets WHERE user_id IN (SELECT id from users WHERE name = "' + user + '") ORDER BY create_at;', function(err, result, fields) {
-            if (err) throw err;
-            let gotTickets = [];
-            for (let i = 0; i < result.length; i++) {
-                let arr = [];
-                arr = {
-                    id: result[i].id,
-                    content: result[i].content,
-                    create_at: result[i].create_at,
-                    checked: result[i].checked,
-                    deleted: result[i].deleted
+//用reciept id找標籤
+app.post("/getTag", (req, res) => {
+  let rescipt_id = req.body.rescipt_id;
+  conn.query(
+    `SELECT * FROM Tags WHERE receipt_id = "${rescipt_id}"LIMIT 1;`,
+    function (err, result, fields) {
+      if (err) throw err;
+      if (result.isEmpty()) {
+        res.json("there is no such recipt");
+      } else {
+        res.json(result.tag_id);
+      }
+    }
+  );
+});
+
+//新增標籤
+app.post("/addTag", (req, res) => {
+  let rescipt_id = req.body.rescipt_id;
+  let tag_name = req.body.tag_name;
+  conn.query(
+    `SELECT * FROM Tags WHERE receipt_id = "${rescipt_id}"LIMIT 1;`,
+    function (err, result, fields) {
+      if (err) throw err;
+        if (result.tag_name == ""){
+            conn.query(
+                `INSERT INTO Tags (receipt_id, tag_name) VALUES ( "${rescipt_id}", "${tag_name}" )LIMIT 1;`,
+                function (err, result, fields) {
+                  if (err) throw err;
+                  res.json(result);
                 }
-                gotTickets.push(arr);
-            }
-            let data = {
-                quota: gotQuota,
-                tickets: gotTickets
-            }
-            console.log(data);
-            res.json(data);
-        })
-    })
-
-});
-
-app.post('/postNewTicket', jsonParser, (req, res) => {
-    let ticketName = req.body.ticketName;
-    let user = req.body.user
-    console.log("new ticket:", ticketName);
-    conn.query(`INSERT INTO tickets (user_id, content) VALUES ((SELECT id FROM users WHERE name = "` + user + `") , "` + ticketName + `");`, function(err, result, fields) {
-        if (err) throw err;
-        conn.query(`SELECT * FROM tickets WHERE id = (SELECT LAST_INSERT_ID());`, function(err, result, fields) {
-            if (err) throw err;
-            console.log(result);
-            res.json(result);
-        })
-    })
-});
-
-app.post('/checkTicket', jsonParser, (req, res) => {
-    let id = req.body.id; //var是全域變數
-    console.log("test", id)
-    conn.query(`UPDATE tickets SET checked = true WHERE id = ` + id, function(err, result, fields) {
-        if (err) throw err;
-        conn.query(`SELECT * FROM tickets WHERE id = ` + id + `;`, function(err, result, fields) {
-            if (err) throw err;
-            console.log(result);
-            res.json(result);
-        })
-    })
-});
-
-app.post('/deleteTicket', jsonParser, (req, res) => {
-    var id = req.body.id; //var是全域變數
-    conn.query(`UPDATE tickets SET deleted = true WHERE id = ` + id, function(err, result, fields) {
-        if (err) throw err;
-        conn.query(`SELECT * FROM tickets WHERE id = ` + id + `;`, function(err, result, fields) {
-            if (err) throw err;
-            console.log(result);
-            res.json(result);
-        })
-    })
-});
-
-app.get(`/getInfoText/:user`, (req, res) => {
-    let user = req.params.user
-    conn.query('SELECT body, create_at FROM articles WHERE title = "info" AND user_id = (SELECT id FROM users WHERE name = "' + user + '");', function(err, result, fields) {
-        if (err) throw err;
-        console.log(result);
-        res.json(result);
-    })
-});
-
-app.get('/renewAutoIncrement', jsonParser, (req, res) => {
-    conn.query(`SELECT * FROM tickets;`, (err, result) => {
-        if (err) {
-            throw err;
+              );
+        }else{
+            res.json("tag already existed");
         }
-        for (let i = 0; i < result.length; i++) {
-            conn.query(`SELECT * FROM tickets LIMIT 1 OFFSET ${i};`, (err, result1) => {
-                if (err) {
-                    throw err;
+            
+        }
+  );
+});
+
+//更新標籤
+app.patch("/updateTag", (req, res) => {
+  let rescipt_id = req.body.rescipt_id;
+  let tag_name = req.body.tag_name;
+        conn.query(
+          `UPDATE Tags SET settag_name = "${tag_name}" WHERE receipt_id = "${receipt_id}" LIMIT 1;`,
+          function (err, result, fields) {
+            if (err) throw err;
+            res.json(result);
+          }
+        );
+});
+
+//刪除標籤
+app.delete("/deleteTag", (req, res) => {
+  let rescipt_id = req.body.rescipt_id;
+  let tag_name = req.body.tag_name;
+  conn.query(
+    `UPDATE Tags SET tag_name = "" WHERE receipt_id = "${receipt_id}";`,
+    function (err, result, fields) {
+      if (err) throw err;
+      res.json(result);
+    }
+  );
+});
+
+//上傳發票
+app.post("/uploadReceipt", (req, res) => {
+    let rescipt_content = req.body.rescipt_content;
+    let rescipt_tag = req.body.rescipt_tag;
+  let decodedContent = decode.decodeReceipt(rescipt_content);
+  let shop_id = ""
+  conn.query(
+    `SELECT shop_id FROM Shops WHERE shop_name = "${rescipt_content.shopName}"LIMIT 1;`,
+    function (err, result, fields) {
+      if (err) throw err;
+      if (result.isEmpty()) {
+        conn.query(
+            `INSERT INTO Shops (shope_name, shop_tel , shop_GST_Reg) VALUES ( "${decodedContent.shopName}", "${decodedContent.shopTel}", "${decodedContent.shopGstReg}" )LIMIT 1;`,
+            function (err, result, fields) {
+              if (err) throw err;
+              conn.query(
+                `SELECT shop_id FROM Shops WHERE shop_name = "${rescipt_content.shopName}"LIMIT 1;`,function (err, result, fields) {
+                    shop_id = result.shop_id
+                });
+            }
+          );
+      } else {
+        shop_id = result.shop_id
+      }
+      conn.query(
+        `INSERT INTO Receipts (receipt_id, receipt_date, receipt_time, receipt_inclusive, receipt_gst, receipt_total) VALUES ( "${decodedContent.receiptId}","${decodedContent.receiptDate}", "${decodedContent.receiptTime}", "${decodedContent.receiptInclusive}", "${decodedContent.receiptGst}", "${decodedContent.receiptTotal}" )LIMIT 1;`,
+        function (err, result, fields) {
+          if (err) throw err;
+          res.json(result);
+        }
+      );
+      for(let i = 0 ; i< decodedContent.receiptItems.length ; i ++){
+          let item = decodedContent.receiptItems[i]
+        conn.query(
+            `INSERT INTO Items (item_id, receipt_id, item_name, item_price, item_quantity) VALUES ( "${item.item_id}","${item.itemName}", "${item.itemQty}", "${item.itemPrice}" )LIMIT 1;`,
+            function (err, result, fields) {
+              if (err) throw err;
+              res.json(result);
+            }
+          );
+      }
+      conn.query(
+        `INSERT INTO Tags (receipt_id, tag_name) VALUES ( "${decodedContent.receiptId}","${rescipt_tag}")LIMIT 1;`,
+        function (err, result, fields) {
+          if (err) throw err;
+          res.json(result);
+        }
+      );
+      
+    })
+});
+
+//get 所有發票資訊
+app.get("/getAllReceiptInfo", (req, res) => {
+    conn.query(`SELECT * FROM Receipts;`, function (err, result, fields) {
+      if (err) throw err;
+      if (result.isEmpty()) {
+        res.json("there is no recipt");
+      } else {
+          let receipts = []
+        for (let i = 0 ; i < result.length ; i ++){
+            let shopId = result.shop_id
+            let receiptId = result.receipt_id
+            let receiptDate = result.receipt_date
+            let receiptTime = result.receipt_time
+            let receiptTotal = result.receipt_total
+            let receiptInclusive = result.receipt_inclusive
+            let receiptGst = result.receipt_gst
+            let shopName = ""
+            let shopTel = ""
+            let shopGst = ""
+            let items = []
+            conn.query(`SELECT * FROM Shops WHERE shop_id = "${shopId}";`, function (err, result, fields) {
+                if (err) throw err;
+                shopName = result.shop_name
+                shopTel = result.shop_tel
+                shopGst = result.shop_GST_Reg
+            })
+            conn.query(`SELECT * FROM Items WHERE receipt_id = "${receipt_id}";`, function (err, result, fields) {
+                if (err) throw err;
+                for(let j = 0 ; j < result.length ; j ++){
+                    let itemId = result[i].itemId
+                    let itemName = result[i].itemName
+                    let itemQty = result[i].itemQty
+                    let itemPrice = result[i].itemPrice
+                    items.push(new decode.Item(itemId, itemName, itemQty, itemPrice))
                 }
-                conn.query(`UPDATE tickets SET id = ${i} WHERE id = ${result[i].id};`, (err, result2) => {
-                    if (err) {
-                        throw err;
+            })
+            let receipt = new decode.Receipt(shopName, shopTel, shopGstReg, receiptDate, receiptTime, receiptId, receiptItems, receiptTotal, receiptInclusive, receiptGst)
+            receipts.push(receipt)
+        }
+        res.json(receipts);
+      }
+    });
+  });
+
+//find receipt by tag
+app.post("/getReceiptByTag", (req, res) => {
+    
+    let tag_name = req.body.tag_name;
+    conn.query(
+      `SELECT * FROM Tags WHERE tag_name = "${tag_name}"LIMIT 1;`,
+      function (err, result, fields) {
+        if (err) throw err;
+        if (result.isEmpty()) {
+          res.json("there is no such recipt");
+        } else {
+            let rescipt_id = result.rescipt_id;
+            conn.query(`SELECT * FROM Receipts WHERE rescipt_id = "${rescipt_id}";`, function (err, result, fields) {
+                if (err) throw err;
+                let shopId = result.shop_id
+                let receiptId = result.receipt_id
+                let receiptDate = result.receipt_date
+                let receiptTime = result.receipt_time
+                let receiptTotal = result.receipt_total
+                let receiptInclusive = result.receipt_inclusive
+                let receiptGst = result.receipt_gst
+                let shopName = ""
+                let shopTel = ""
+                let shopGst = ""
+                let items = []
+                conn.query(`SELECT * FROM Shops WHERE shop_id = "${shopId}";`, function (err, result, fields) {
+                    if (err) throw err;
+                    shopName = result.shop_name
+                    shopTel = result.shop_tel
+                    shopGst = result.shop_GST_Reg
+                })
+                conn.query(`SELECT * FROM Items WHERE receipt_id = "${receipt_id}";`, function (err, result, fields) {
+                    if (err) throw err;
+                    for(let j = 0 ; j < result.length ; j ++){
+                        let itemId = result[i].itemId
+                        let itemName = result[i].itemName
+                        let itemQty = result[i].itemQty
+                        let itemPrice = result[i].itemPrice
+                        items.push(new decode.Item(itemId, itemName, itemQty, itemPrice))
                     }
                 })
+                let receipt = new decode.Receipt(shopName, shopTel, shopGstReg, receiptDate, receiptTime, receiptId, receiptItems, receiptTotal, receiptInclusive, receiptGst)
+                res.json(receipt)
             })
         }
-    })
-})
-
-module.exports = (req, res) => {
-    const { name = 'World' } = req.query
-    res.send(`Hello ${name}!`)
-  }
+      }
+    );
+  });
+  
