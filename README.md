@@ -1,5 +1,5 @@
 # exam_aimazing
-
+![](https://github.com/worksB-collab/exam_aimazing/blob/master/er.jpg)
 ### 用戶登入
 `POST` `http://34.80.168.87:3000/login`
 
