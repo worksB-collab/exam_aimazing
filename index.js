@@ -2,6 +2,10 @@ const decode = require("./decode.js");
 const express = require("express");
 const bodyParser = require("body-parser");
 const cors = require("cors");
+const mongoose = require('mongoose')
+const Schema = mongoose.Schema
+const jwt = require('jsonwebtoken')
+const bcrypt = require('bcryptjs')
 const app = express();
 app.use(
   bodyParser.urlencoded({
@@ -30,10 +34,60 @@ conn.connect(function (err) {
 app.use(cors());
 var jsonParser = bodyParser.json(); 
 
+userSchema.pre('save', async function (next) {
+  // this 指向目前正被儲存的使用者 document
+  const user = this
+
+  // 確認使用者的 password 欄位是有被變更：初次建立＆修改密碼都算
+  if (user.isModified('password')) {
+    // 透過 bcrypt 處理密碼，獲得 hashed password
+    user.password = await bcrypt.hash(user.password, 8)
+  }
+  next()
+})
+
+userSchema.methods.generateAuthToken = async function () {
+  // this 指向當前的使用者實例
+  const user = this
+  // 產生一組 JWT
+  const token = jwt.sign({ _id: user._id.toString() }, 'thisismynewproject')
+  // 將該 token 存入資料庫中：讓使用者能跨裝置登入及登出
+  user.tokens = user.tokens.concat({ token })
+  await user.save()
+  // 回傳 JWT
+  return token
+}
+
+// User schema
+const userSchema = new Schema({
+  username:{
+    type: String
+  },
+  password:{
+    type: String
+  },
+  tokens: [{
+    token: {
+      type: String,
+      required: true
+    }
+  }],
+})
+
 //登入
 app.post("/login", (req, res) => {
     let user = req.body.username;
     let password = req.body.password;
+    try {
+      // 從 req.body 獲取驗證資訊，並在資料庫存與該用戶
+      const user = await User.create(req.body)
+      // 為該成功註冊之用戶產生 JWT
+      const token = await user.generateAuthToken()
+      // 回傳該用戶資訊及 JWT
+      res.status(201).send({ user, token })
+    } catch (err) {
+      res.status(400).send(err)
+    }
     conn.query(
       `SELECT* FROM Users WHERE user_username = "${user}"LIMIT 1;`,
       function (err, result, fields) {
@@ -50,6 +104,7 @@ app.post("/login", (req, res) => {
   //登出
   app.post("/logout", (req, res) => {
     let user = req.body.token;
+    const token = req.header('Authorization').replace('Bearer ', '')
   });
 
 //get所有標籤
