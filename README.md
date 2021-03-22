@@ -22,7 +22,13 @@
 ```
 ### 用戶登出
 `POST` `http://34.80.168.87:3000/logout`
-
+* Header傳入參數：
+```
+{
+    "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImFkbWluIiwiaWF0IjoxNjAzMjg0NjYwLCJleHAiOjE2MDMyODQ2OTB9.A1KZvbbMKxYX-fulXhRRgozwGsuJgLKe_S93hClhvA8"
+    \\在Authorization帶入"Bearer" + " " + token
+}
+```
 * Body傳入參數：
 ```
 {
@@ -41,7 +47,13 @@
 
 ### 讀取所有標籤
 `GET` `http://34.80.168.87:3000/getAllTags`
-
+* Header傳入參數：
+```
+{
+    "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImFkbWluIiwiaWF0IjoxNjAzMjg0NjYwLCJleHAiOjE2MDMyODQ2OTB9.A1KZvbbMKxYX-fulXhRRgozwGsuJgLKe_S93hClhvA8"
+    \\在Authorization帶入"Bearer" + " " + token
+}
+```
 * 結果：
 ```
 {
@@ -67,7 +79,13 @@
 
 ### 標籤新增
 `POST` `http://34.80.168.87:3000/addTag`
-
+* Header傳入參數：
+```
+{
+    "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImFkbWluIiwiaWF0IjoxNjAzMjg0NjYwLCJleHAiOjE2MDMyODQ2OTB9.A1KZvbbMKxYX-fulXhRRgozwGsuJgLKe_S93hClhvA8"
+    \\在Authorization帶入"Bearer" + " " + token
+}
+```
 * Body傳入參數：
 ```
 {
@@ -86,7 +104,13 @@
 
 ### 標籤更新
 `POST` `http://34.80.168.87:3000/updateTag`
-
+* Header傳入參數：
+```
+{
+    "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImFkbWluIiwiaWF0IjoxNjAzMjg0NjYwLCJleHAiOjE2MDMyODQ2OTB9.A1KZvbbMKxYX-fulXhRRgozwGsuJgLKe_S93hClhvA8"
+    \\在Authorization帶入"Bearer" + " " + token
+}
+```
 * Body傳入參數：
 ```
 {
@@ -105,7 +129,13 @@
 
 ### 由ID搜尋標籤
 `POST` `http://34.80.168.87:3000/getTagById`
-
+* Header傳入參數：
+```
+{
+    "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImFkbWluIiwiaWF0IjoxNjAzMjg0NjYwLCJleHAiOjE2MDMyODQ2OTB9.A1KZvbbMKxYX-fulXhRRgozwGsuJgLKe_S93hClhvA8"
+    \\在Authorization帶入"Bearer" + " " + token
+}
+```
 * Body傳入參數：
 ```
 {
@@ -125,7 +155,13 @@
 
 ### 刪除標籤
 `POST` `http://34.80.168.87:3000/deleteTag`
-
+* Header傳入參數：
+```
+{
+    "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImFkbWluIiwiaWF0IjoxNjAzMjg0NjYwLCJleHAiOjE2MDMyODQ2OTB9.A1KZvbbMKxYX-fulXhRRgozwGsuJgLKe_S93hClhvA8"
+    \\在Authorization帶入"Bearer" + " " + token
+}
+```
 * Body傳入參數：
 ```
 {
@@ -143,7 +179,13 @@
 
 ### 上傳發票
 `POST` `http://34.80.168.87:3000/uploadReceipt`
-
+* Header傳入參數：
+```
+{
+    "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImFkbWluIiwiaWF0IjoxNjAzMjg0NjYwLCJleHAiOjE2MDMyODQ2OTB9.A1KZvbbMKxYX-fulXhRRgozwGsuJgLKe_S93hClhvA8"
+    \\在Authorization帶入"Bearer" + " " + token
+}
+```
 * Body傳入參數：
 ```
 {
@@ -182,6 +224,13 @@
 
 ### 獲取所有發票資訊
 `GET` `http://34.80.168.87:3000/getAllReceiptInfo`
+* Header傳入參數：
+```
+{
+    "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImFkbWluIiwiaWF0IjoxNjAzMjg0NjYwLCJleHAiOjE2MDMyODQ2OTB9.A1KZvbbMKxYX-fulXhRRgozwGsuJgLKe_S93hClhvA8"
+    \\在Authorization帶入"Bearer" + " " + token
+}
+```
 * 結果：
 ```
 {
@@ -231,6 +280,13 @@
 
 ### 透過標籤獲取單筆發票資訊
 `POST` `http://34.80.168.87:3000/getReceiptByTag`
+* Header傳入參數：
+```
+{
+    "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImFkbWluIiwiaWF0IjoxNjAzMjg0NjYwLCJleHAiOjE2MDMyODQ2OTB9.A1KZvbbMKxYX-fulXhRRgozwGsuJgLKe_S93hClhvA8"
+    \\在Authorization帶入"Bearer" + " " + token
+}
+```
 * Body傳入參數：
 ```
 {
